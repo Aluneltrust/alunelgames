@@ -103,11 +103,12 @@ export default function App() {
           </div>
         )}
 
-        {/* Footer */}
-        <footer className="mt-20 text-center text-xs text-gray-300 dark:text-gray-700">
-          Powered by BSV blockchain
-        </footer>
       </div>
+
+      {/* Footer */}
+      <footer className="fixed bottom-4 left-0 right-0 text-center text-xs text-gray-300 dark:text-gray-700 z-10">
+        Powered by BSV blockchain
+      </footer>
 
       {pendingTx && <TxApprovalModal pending={pendingTx} />}
     </div>
