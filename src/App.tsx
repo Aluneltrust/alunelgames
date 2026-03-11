@@ -80,7 +80,7 @@ export default function App() {
             BSV Gaming Hub
           </div>
           <h1 className="text-5xl sm:text-6xl font-bold tracking-tight mb-3 text-gray-900 dark:text-white">
-            Alunel Games
+            Alunel Games™
           </h1>
           <p className="text-lg text-gray-400 dark:text-gray-500 max-w-md mx-auto">
             One wallet. All your games. Real BSV micropayments.
