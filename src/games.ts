@@ -12,7 +12,7 @@ export const GAMES: GameConfig[] = [
   {
     id: 'tanks',
     name: 'BSV Tanks',
-    url: 'https://royalsonchain.com',
+    url: 'http://localhost:5175',
     description: 'Turn-based tank battle with BSV wagers',
     color: '#ef4444',
     gradient: 'from-red-500/20 to-orange-500/10',
@@ -21,7 +21,7 @@ export const GAMES: GameConfig[] = [
   {
     id: 'flock-wars',
     name: 'Flock Wars',
-    url: 'https://sheeponchain.com',
+    url: 'http://localhost:5176',
     description: 'Hex-grid battleship with sheep',
     color: '#22c55e',
     gradient: 'from-green-500/20 to-emerald-500/10',
