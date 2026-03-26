@@ -71,8 +71,23 @@ export class WalletService {
   }
 
   async getBalance(): Promise<number> {
-    const utxos = await this.getUtxos();
-    return utxos.reduce((sum, u) => sum + u.satoshis, 0);
+    if (!this.privateKey) throw new Error('Wallet not connected');
+    const address = this.getAddress();
+    // Use the balance endpoint directly — avoids CORS issues with tx/hex enrichment
+    try {
+      const res = await fetch(`${WOC_BASE}/address/${address}/balance`);
+      if (!res.ok) throw new Error(`WOC balance error: ${res.status}`);
+      const data = await res.json();
+      return (data.confirmed ?? 0) + (data.unconfirmed ?? 0);
+    } catch {
+      // Fallback to UTXO sum if balance endpoint fails
+      try {
+        const utxos = await this.getUtxos();
+        return utxos.reduce((sum, u) => sum + u.satoshis, 0);
+      } catch {
+        return 0;
+      }
+    }
   }
 
   async getUtxos(forceRefresh = false): Promise<UTXO[]> {
@@ -194,7 +209,7 @@ export class WalletService {
   }
 
   static isValidAddress(address: string): boolean {
-    return /^[13][a-km-zA-HJ-NP-Z1-9]{25,34}$/.test(address);
+    return /^1[a-km-zA-HJ-NP-Z1-9]{24,33}$/.test(address);
   }
 }
 

@@ -11,14 +11,54 @@
 //   const result = await gameWallet.signTransaction(escrowAddr, 1000, 'wager');
 // ============================================================================
 
+const BRIDGE_VERSION = 1;
+
 let requestId = 0;
+let parentOrigin: string | null = null;
 
 interface WalletResponse {
   type: 'WALLET_RESPONSE';
+  version?: number;
   id: string;
   success: boolean;
   data?: unknown;
   error?: string;
+}
+
+interface BridgeReady {
+  type: 'WALLET_BRIDGE_READY';
+  version: number;
+  origin: string;
+}
+
+// Discover the parent's origin via handshake
+function initHandshake(): Promise<string> {
+  if (parentOrigin) return Promise.resolve(parentOrigin);
+
+  return new Promise((resolve) => {
+    const handler = (event: MessageEvent) => {
+      const data = event.data as BridgeReady;
+      if (data?.type === 'WALLET_BRIDGE_READY' && data.origin) {
+        parentOrigin = data.origin;
+        window.removeEventListener('message', handler);
+        resolve(parentOrigin);
+      }
+    };
+
+    window.addEventListener('message', handler);
+
+    // Request handshake — use '*' only for this init message
+    window.parent.postMessage({ type: 'WALLET_BRIDGE_INIT' }, '*');
+
+    // Fallback: if no handshake response in 2s, use '*' (backwards compat)
+    setTimeout(() => {
+      if (!parentOrigin) {
+        window.removeEventListener('message', handler);
+        parentOrigin = '*';
+        resolve('*');
+      }
+    }, 2000);
+  });
 }
 
 function sendRequest(action: string, payload?: Record<string, unknown>): Promise<unknown> {
@@ -28,6 +68,11 @@ function sendRequest(action: string, payload?: Record<string, unknown>): Promise
     const handler = (event: MessageEvent) => {
       const data = event.data as WalletResponse;
       if (data?.type !== 'WALLET_RESPONSE' || data.id !== id) return;
+
+      // Validate origin if we know it
+      if (parentOrigin && parentOrigin !== '*' && event.origin !== parentOrigin) return;
+
+      clearTimeout(timeoutId);
       window.removeEventListener('message', handler);
       if (data.success) {
         resolve(data.data);
@@ -39,19 +84,24 @@ function sendRequest(action: string, payload?: Record<string, unknown>): Promise
     window.addEventListener('message', handler);
 
     // Timeout after 60s (user may need time to approve)
-    setTimeout(() => {
+    const timeoutId = setTimeout(() => {
       window.removeEventListener('message', handler);
       reject(new Error('Wallet request timed out'));
     }, 60000);
 
+    const target = parentOrigin || '*';
     window.parent.postMessage(
-      { type: 'WALLET_REQUEST', id, action, payload },
-      '*', // Parent origin — games don't know the parent's origin
+      { type: 'WALLET_REQUEST', version: BRIDGE_VERSION, id, action, payload },
+      target,
     );
   });
 }
 
 export const gameWallet = {
+  async init(): Promise<void> {
+    await initHandshake();
+  },
+
   async getAddress(): Promise<string> {
     return sendRequest('getAddress') as Promise<string>;
   },
@@ -62,6 +112,10 @@ export const gameWallet = {
 
   async getPublicKey(): Promise<string> {
     return sendRequest('getPublicKey') as Promise<string>;
+  },
+
+  async getUsername(): Promise<string> {
+    return sendRequest('getUsername') as Promise<string>;
   },
 
   async signTransaction(toAddress: string, amount: number, memo?: string) {
@@ -80,3 +134,8 @@ export const gameWallet = {
     }
   },
 };
+
+// Auto-init handshake when embedded
+if (gameWallet.isEmbedded()) {
+  initHandshake();
+}

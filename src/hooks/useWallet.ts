@@ -20,6 +20,8 @@ export interface WalletHook {
   addressHint: string | null;
   walletSource: WalletSource | null;
   yoursAvailable: boolean;
+  username: string;
+  setUsername: (name: string) => void;
   createWallet: (pin: string) => Promise<void>;
   importWallet: (wif: string, pin: string) => Promise<void>;
   unlockWallet: (pin: string) => Promise<void>;
@@ -39,6 +41,13 @@ export function useWallet(): WalletHook {
   const [addressHint, setAddressHint] = useState<string | null>(getAddressHint());
   const [walletSource, setWalletSource] = useState<WalletSource | null>(null);
   const [yoursAvailable, setYoursAvailable] = useState(false);
+  const [username, setUsernameState] = useState(() => localStorage.getItem('alunel_username') || '');
+
+  const setUsername = useCallback((name: string) => {
+    const sanitized = name.replace(/<[^>]*>/g, '').slice(0, 32);
+    setUsernameState(sanitized);
+    localStorage.setItem('alunel_username', sanitized);
+  }, []);
 
   // Check for Yours Wallet extension on mount (may load after DOM)
   useEffect(() => {
@@ -104,11 +113,19 @@ export function useWallet(): WalletHook {
     setLoading(true);
     try {
       const { address: addr } = await yoursWalletService.connect();
+      let bal = 0;
+      try {
+        bal = await yoursWalletService.getBalance();
+      } catch (e) {
+        console.error('Balance fetch failed after Yours connect:', e);
+      }
       setAddress(addr);
+      setBalance(bal);
       setConnected(true);
       setWalletSource('yours');
-      const bal = await yoursWalletService.getBalance();
-      setBalance(bal);
+    } catch (e) {
+      // Connection itself failed — don't set connected state
+      throw e;
     } finally {
       setLoading(false);
     }
@@ -152,6 +169,7 @@ export function useWallet(): WalletHook {
   return {
     address, balance, connected, loading,
     hasStored, addressHint, walletSource, yoursAvailable,
+    username, setUsername,
     createWallet, importWallet, unlockWallet, connectYoursWallet,
     disconnectWallet, deleteWallet, refreshBalance, exportWif,
   };

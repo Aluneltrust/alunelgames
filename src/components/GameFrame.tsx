@@ -25,8 +25,7 @@ export function GameFrame({ game, onBack }: GameFrameProps) {
       <iframe
         src={game.url}
         className="flex-1 w-full border-0 bg-white dark:bg-black"
-        allow="clipboard-read; clipboard-write"
-        sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
+        sandbox="allow-scripts allow-same-origin"
         referrerPolicy="no-referrer"
         title={game.name}
       />

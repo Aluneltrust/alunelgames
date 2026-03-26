@@ -1,13 +1,14 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useWallet } from './hooks/useWallet';
 import { useTheme } from './hooks/useTheme';
-import { startWalletBridge, setApprovalCallback, setWalletSource } from './services/WalletBridge';
+import { startWalletBridge, setApprovalCallback } from './services/WalletBridge';
 import type { PendingApproval } from './services/WalletBridge';
 import type { GameConfig } from './games';
 import { WalletPanel } from './components/WalletPanel';
 import { GameSelector } from './components/GameSelector';
 import { GameFrame } from './components/GameFrame';
 import { TxApprovalModal } from './components/TxApprovalModal';
+import { InteractiveBg } from './components/InteractiveBg';
 
 export default function App() {
   const wallet = useWallet();
@@ -15,24 +16,27 @@ export default function App() {
   const [activeGame, setActiveGame] = useState<GameConfig | null>(null);
   const [pendingTx, setPendingTx] = useState<PendingApproval | null>(null);
 
-  useEffect(() => {
-    const cleanup = startWalletBridge();
-    setApprovalCallback((pending) => {
-      setPendingTx(pending);
-      const originalResolve = pending.resolve;
-      pending.resolve = (approved: boolean) => {
-        setPendingTx(null);
-        originalResolve(approved);
-      };
-    });
-    return cleanup;
+  // Use refs so the bridge always reads live values without re-syncing
+  const walletRef = useRef(wallet);
+  walletRef.current = wallet;
+
+  const handleApproval = useCallback((pending: PendingApproval) => {
+    setPendingTx(pending);
+    const originalResolve = pending.resolve;
+    pending.resolve = (approved: boolean) => {
+      setPendingTx(null);
+      originalResolve(approved);
+    };
   }, []);
 
   useEffect(() => {
-    if (wallet.walletSource) {
-      setWalletSource(wallet.walletSource);
-    }
-  }, [wallet.walletSource]);
+    const cleanup = startWalletBridge({
+      getSource: () => walletRef.current.walletSource,
+      getBalance: () => walletRef.current.balance,
+    });
+    setApprovalCallback(handleApproval);
+    return cleanup;
+  }, [handleApproval]);
 
   if (activeGame) {
     return (
@@ -44,15 +48,15 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-[#fafafa] dark:bg-[#09090b] text-gray-900 dark:text-white relative">
-      <div className="bg-mesh" />
+    <div className="min-h-screen bg-[#fafafa] dark:bg-[#09090b] text-gray-900 dark:text-white relative flex items-center justify-center">
+      <InteractiveBg />
 
-      <div className="relative z-10 max-w-5xl mx-auto px-6 py-16">
+      <div className="relative z-10 max-w-5xl w-full mx-auto px-6 py-16">
         {/* Theme Toggle */}
         <button
           onClick={toggleTheme}
           className="fixed top-5 right-5 z-50 w-10 h-10 rounded-xl bg-white dark:bg-white/10 border border-gray-200 dark:border-white/10 shadow-sm flex items-center justify-center text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-white/15 transition-all"
-          title={theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}
+          aria-label={theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}
         >
           {theme === 'light' ? (
             <svg className="w-[18px] h-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -75,12 +79,8 @@ export default function App() {
 
         {/* Header */}
         <header className="text-center mb-12">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-indigo-50 dark:bg-indigo-500/10 text-xs text-indigo-500 dark:text-indigo-400 mb-6 tracking-wide uppercase font-medium">
-            <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 pulse-dot" />
-            BSV Gaming Hub
-          </div>
           <h1 className="text-5xl sm:text-6xl font-bold tracking-tight mb-3 text-gray-900 dark:text-white">
-            ALUNEL<sup className="text-xl font-normal opacity-50">™</sup> Games
+            <span className="relative inline-block mr-4">Alunel<span className="absolute -top-1 -right-5 text-sm font-normal opacity-50">TM</span></span> Games
           </h1>
           <p className="text-lg text-gray-400 dark:text-gray-500 max-w-md mx-auto">
             One wallet. All your games. Real BSV micropayments.
@@ -88,7 +88,7 @@ export default function App() {
         </header>
 
         {/* Wallet */}
-        <div className="max-w-md mx-auto mb-12">
+        <div className="max-w-[220px] mx-auto mb-12">
           <WalletPanel wallet={wallet} />
         </div>
 
