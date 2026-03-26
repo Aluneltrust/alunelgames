@@ -1,3 +1,4 @@
+import { useRef, useCallback } from 'react';
 import type { GameConfig } from '../games';
 
 interface GameFrameProps {
@@ -6,6 +7,20 @@ interface GameFrameProps {
 }
 
 export function GameFrame({ game, onBack }: GameFrameProps) {
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+
+  // When the iframe loads, proactively send a WALLET_BRIDGE_READY handshake
+  // so the game knows a parent wallet is available (even if referrer is empty)
+  const handleIframeLoad = useCallback(() => {
+    const iframe = iframeRef.current;
+    if (!iframe?.contentWindow) return;
+    const gameOrigin = new URL(game.url).origin;
+    iframe.contentWindow.postMessage(
+      { type: 'WALLET_BRIDGE_READY', version: 1, origin: window.location.origin },
+      gameOrigin,
+    );
+  }, [game.url]);
+
   return (
     <div className="flex flex-col h-full">
       <div className="flex items-center gap-3 px-5 py-2.5 bg-white dark:bg-[#0a0a12] border-b border-gray-100 dark:border-white/[0.06]">
@@ -23,10 +38,12 @@ export function GameFrame({ game, onBack }: GameFrameProps) {
         </div>
       </div>
       <iframe
+        ref={iframeRef}
         src={game.url}
         className="flex-1 w-full border-0 bg-white dark:bg-black"
-        sandbox="allow-scripts allow-same-origin"
-        referrerPolicy="no-referrer"
+        sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
+        referrerPolicy="origin"
+        onLoad={handleIframeLoad}
         title={game.name}
       />
     </div>

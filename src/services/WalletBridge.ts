@@ -51,13 +51,10 @@ export function setApprovalCallback(cb: (pending: PendingApproval) => void): voi
   approvalCallback = cb;
 }
 
-// Derive allowed origins from game registry + production domains
+// Derive allowed origins from game registry + www variants
 const ALLOWED_ORIGINS: ReadonlySet<string> = new Set([
   ...GAMES.map(g => new URL(g.url).origin),
-  'https://royalsonchain.com',
-  'https://www.royalsonchain.com',
-  'https://sheeponchain.com',
-  'https://www.sheeponchain.com',
+  ...GAMES.map(g => { const u = new URL(g.url); return `${u.protocol}//www.${u.host}`; }),
 ]);
 
 function sendResponse(source: MessageEventSource, response: WalletResponse, origin: string): void {
