@@ -93,6 +93,16 @@ body {
   animation: pulse-dot 2s ease-in-out infinite;
 }
 
+/* Orange pulse for empty username */
+@keyframes pulse-orange {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(249, 115, 22, 0.4); border-color: rgba(249, 115, 22, 0.3); }
+  50% { box-shadow: 0 0 0 4px rgba(249, 115, 22, 0); border-color: rgba(249, 115, 22, 0.5); }
+}
+.pulse-orange {
+  border: 1px solid rgba(249, 115, 22, 0.3);
+  animation: pulse-orange 2s ease-in-out infinite;
+}
+
 /* PIN input dots */
 .pin-dot {
   width: 9px;

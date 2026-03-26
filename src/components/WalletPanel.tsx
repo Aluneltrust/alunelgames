@@ -129,104 +129,88 @@ export function WalletPanel({ wallet }: { wallet: WalletHook }) {
   // Connected view
   if (wallet.connected || view === 'connected') {
     const isYours = wallet.walletSource === 'yours';
+    const usernameEmpty = !wallet.username.trim();
 
     return (
       <div className={`rounded-2xl p-4 ${isYours ? 'card-elevated' : 'card-elevated glow-connected'}`}>
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-1.5">
-            <div className="w-6 h-6 rounded-md bg-gradient-to-br from-green-400 to-emerald-500 flex items-center justify-center">
-              <svg className="w-3 h-3 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+        {/* Top row: status + balance + username + address */}
+        <div className="flex items-center gap-3 mb-3">
+          <div className="flex items-center gap-1.5 shrink-0">
+            <div className="w-5 h-5 rounded-md bg-gradient-to-br from-green-400 to-emerald-500 flex items-center justify-center">
+              <svg className="w-2.5 h-2.5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M20 6L9 17l-5-5" />
               </svg>
             </div>
-            <div>
-              <h2 className="text-xs font-semibold text-gray-800 dark:text-gray-200">
-                {isYours ? 'Yours Wallet' : 'Master Wallet'}
-              </h2>
-              {isYours && (
-                <span className="text-[9px] text-violet-500 dark:text-violet-400 font-medium">Browser Extension</span>
-              )}
-            </div>
+            <span className="text-[9px] text-green-600 dark:text-green-400 font-medium">
+              {isYours ? 'Yours' : 'Master'}
+            </span>
           </div>
-          <span className="flex items-center gap-1 px-2 py-0.5 bg-green-50 dark:bg-green-500/10 text-green-600 dark:text-green-400 text-[9px] font-medium rounded-full">
-            <span className="w-1 h-1 rounded-full bg-green-500 pulse-dot" />
-            Connected
-          </span>
-        </div>
 
-        <div className="space-y-2.5">
           {/* Balance */}
-          <div className="text-center py-2.5 rounded-lg bg-gray-50/80 dark:bg-white/[0.03]">
-            <p className="text-[9px] text-gray-400 dark:text-gray-500 uppercase tracking-wider font-medium mb-0.5">Balance</p>
-            <p className="text-sm font-bold font-mono text-gray-900 dark:text-white">
-              {wallet.loading ? (
-                <span className="text-gray-300 dark:text-gray-600">...</span>
-              ) : (
-                formatBalance(wallet.balance)
-              )}
+          <div className="flex items-center gap-1.5 shrink-0 px-2.5 py-1 rounded-lg bg-gray-50/80 dark:bg-white/[0.03]">
+            <p className="text-xs font-bold font-mono text-gray-900 dark:text-white">
+              {wallet.loading ? '...' : formatBalance(wallet.balance)}
             </p>
-            <button onClick={wallet.refreshBalance} className="mt-1 text-[10px] text-indigo-500 dark:text-indigo-400 hover:text-indigo-600 dark:hover:text-indigo-300 font-medium transition-colors">
-              Refresh
+            <button onClick={wallet.refreshBalance} className="text-[9px] text-indigo-500 dark:text-indigo-400 hover:text-indigo-600 dark:hover:text-indigo-300 font-medium transition-colors">
+              ↻
             </button>
           </div>
 
           {/* Username */}
-          <div className="flex items-center gap-2 rounded-lg bg-gray-50/80 dark:bg-white/[0.03] p-2.5">
+          <div className={`flex items-center gap-1.5 flex-1 min-w-0 rounded-lg bg-gray-50/80 dark:bg-white/[0.03] px-2.5 py-1 ${usernameEmpty ? 'pulse-orange' : ''}`}>
             <span className="text-[9px] text-gray-400 dark:text-gray-500 uppercase tracking-wider font-medium shrink-0">Name</span>
             <input
               type="text"
               value={wallet.username}
               onChange={e => wallet.setUsername(e.target.value)}
-              placeholder="Enter username"
-              className="text-[10px] text-gray-700 dark:text-gray-300 bg-transparent flex-1 text-center outline-none placeholder:text-gray-300 dark:placeholder:text-gray-600"
+              placeholder="Set username"
+              className="text-[10px] text-gray-700 dark:text-gray-300 bg-transparent flex-1 min-w-0 text-center outline-none placeholder:text-orange-400/60 dark:placeholder:text-orange-400/40"
             />
           </div>
-
-          {/* Address */}
-          <div className="flex items-center gap-2 rounded-lg bg-gray-50/80 dark:bg-white/[0.03] p-2.5">
-            <span className="text-[9px] text-gray-400 dark:text-gray-500 uppercase tracking-wider font-medium shrink-0">Address</span>
-            <code className="text-[10px] text-gray-500 dark:text-gray-400 truncate flex-1 text-center">{wallet.address}</code>
-            <button onClick={() => handleCopy(wallet.address, 'address')} className="text-[9px] text-indigo-500 dark:text-indigo-400 hover:text-indigo-600 dark:hover:text-indigo-300 font-medium transition-colors shrink-0">
-              {copied === 'address' ? 'Copied!' : 'Copy'}
-            </button>
-          </div>
-
-          {/* Actions */}
-          <div className="pt-2 border-t border-gray-100 dark:border-white/5 space-y-1.5">
-            {!isYours && (
-              <>
-                <button
-                  onClick={() => {
-                    if (showWif) { setShowWif(false); setExportedWif(''); }
-                    else { setExportedWif(wallet.exportWif()); setShowWif(true); }
-                  }}
-                  className="w-full py-2 text-[10px] bg-gray-50 dark:bg-white/[0.04] hover:bg-gray-100 dark:hover:bg-white/[0.08] text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 rounded-lg transition-all font-medium"
-                >
-                  {showWif ? 'Hide Private Key' : 'Export Private Key'}
-                </button>
-
-                {showWif && (
-                  <div className="bg-red-50 dark:bg-red-500/5 border border-red-100 dark:border-red-500/10 rounded-lg p-2.5">
-                    <p className="text-[9px] text-red-400 mb-1.5">Anyone with this key controls your funds.</p>
-                    <div className="flex items-start gap-2">
-                      <code className="text-[9px] text-red-600/70 dark:text-red-300/80 break-all flex-1 leading-relaxed">{exportedWif}</code>
-                      <button onClick={() => handleCopy(exportedWif, 'wif')} className="text-[9px] text-red-500 dark:text-red-400 hover:text-red-600 dark:hover:text-red-300 font-medium shrink-0 mt-0.5">
-                        {copied === 'wif' ? 'Copied!' : 'Copy'}
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </>
-            )}
-
-            <button
-              onClick={handleDisconnect}
-              className="w-full py-2 text-[10px] bg-gray-50 dark:bg-white/[0.04] hover:bg-red-50 dark:hover:bg-red-500/10 text-gray-400 dark:text-gray-500 hover:text-red-500 dark:hover:text-red-400 rounded-lg transition-all font-medium"
-            >
-              {isYours ? 'Disconnect' : 'Lock Wallet'}
-            </button>
-          </div>
         </div>
+
+        {/* Address row */}
+        <div className="flex items-center gap-2 rounded-lg bg-gray-50/80 dark:bg-white/[0.03] px-2.5 py-1.5 mb-3">
+          <span className="text-[9px] text-gray-400 dark:text-gray-500 uppercase tracking-wider font-medium shrink-0">Address</span>
+          <code className="text-[10px] text-gray-500 dark:text-gray-400 truncate flex-1 text-center">{wallet.address}</code>
+          <button onClick={() => handleCopy(wallet.address, 'address')} className="text-[9px] text-indigo-500 dark:text-indigo-400 hover:text-indigo-600 dark:hover:text-indigo-300 font-medium transition-colors shrink-0">
+            {copied === 'address' ? 'Copied!' : 'Copy'}
+          </button>
+        </div>
+
+        {/* Actions row */}
+        <div className="flex items-center gap-2">
+          {!isYours && (
+            <button
+              onClick={() => {
+                if (showWif) { setShowWif(false); setExportedWif(''); }
+                else { setExportedWif(wallet.exportWif()); setShowWif(true); }
+              }}
+              className="flex-1 py-1.5 text-[10px] bg-gray-50 dark:bg-white/[0.04] hover:bg-gray-100 dark:hover:bg-white/[0.08] text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 rounded-lg transition-all font-medium"
+            >
+              {showWif ? 'Hide Key' : 'Export Key'}
+            </button>
+          )}
+          <button
+            onClick={handleDisconnect}
+            className="flex-1 py-1.5 text-[10px] bg-gray-50 dark:bg-white/[0.04] hover:bg-red-50 dark:hover:bg-red-500/10 text-gray-400 dark:text-gray-500 hover:text-red-500 dark:hover:text-red-400 rounded-lg transition-all font-medium"
+          >
+            {isYours ? 'Disconnect' : 'Lock'}
+          </button>
+        </div>
+
+        {/* Export key reveal (below actions) */}
+        {showWif && !isYours && (
+          <div className="bg-red-50 dark:bg-red-500/5 border border-red-100 dark:border-red-500/10 rounded-lg p-2.5 mt-2">
+            <p className="text-[9px] text-red-400 mb-1.5">Anyone with this key controls your funds.</p>
+            <div className="flex items-start gap-2">
+              <code className="text-[9px] text-red-600/70 dark:text-red-300/80 break-all flex-1 leading-relaxed">{exportedWif}</code>
+              <button onClick={() => handleCopy(exportedWif, 'wif')} className="text-[9px] text-red-500 dark:text-red-400 hover:text-red-600 dark:hover:text-red-300 font-medium shrink-0 mt-0.5">
+                {copied === 'wif' ? 'Copied!' : 'Copy'}
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     );
   }
