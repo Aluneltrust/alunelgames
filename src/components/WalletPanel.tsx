@@ -245,28 +245,29 @@ export function WalletPanel({ wallet }: { wallet: WalletHook }) {
           <p className="text-center text-[7px] text-gray-400">Tap here to enter PIN</p>
         </div>
 
-        <button
-          onClick={handleUnlock}
-          disabled={pin.length !== 4}
-          className="w-full py-1 bg-indigo-500 hover:bg-indigo-600 disabled:bg-gray-100 dark:disabled:bg-white/[0.04] disabled:text-gray-300 dark:disabled:text-gray-600 text-white text-[8px] font-medium rounded transition-all shadow-sm shadow-indigo-500/20"
-        >
-          Unlock
-        </button>
-
-        <button onClick={() => { setView('import'); setError(''); setPin(''); }} className="w-full mt-1 py-1 text-[8px] text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 bg-gray-50 dark:bg-white/[0.03] hover:bg-gray-100 dark:hover:bg-white/[0.06] rounded transition-all font-medium">
-          Import Key
-        </button>
+        <div className="flex gap-1">
+          <button
+            onClick={handleUnlock}
+            disabled={pin.length !== 4}
+            className="w-1/2 py-1 bg-indigo-500 hover:bg-indigo-600 disabled:bg-gray-100 dark:disabled:bg-white/[0.04] disabled:text-gray-300 dark:disabled:text-gray-600 text-white text-[8px] font-medium rounded transition-all shadow-sm shadow-indigo-500/20"
+          >
+            Unlock
+          </button>
+          <button onClick={() => { setView('import'); setError(''); setPin(''); }} className="w-1/2 py-1 text-[8px] text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 bg-gray-50 dark:bg-white/[0.03] hover:bg-gray-100 dark:hover:bg-white/[0.06] rounded transition-all font-medium">
+            Import Key
+          </button>
+        </div>
         {confirmDelete ? (
           <div className="flex gap-1 mt-1">
             <button
               onClick={() => { wallet.deleteWallet(); setView('create'); setConfirmDelete(false); }}
-              className="flex-1 py-1 text-[8px] text-white bg-red-500 hover:bg-red-600 rounded transition-all font-medium"
+              className="w-1/2 py-1 text-[8px] text-white bg-red-500 hover:bg-red-600 rounded transition-all font-medium"
             >
               Confirm Delete
             </button>
             <button
               onClick={() => setConfirmDelete(false)}
-              className="flex-1 py-1 text-[8px] text-gray-400 bg-gray-50 dark:bg-white/[0.03] hover:bg-gray-100 dark:hover:bg-white/[0.06] rounded transition-all font-medium"
+              className="w-1/2 py-1 text-[8px] text-gray-400 bg-gray-50 dark:bg-white/[0.03] hover:bg-gray-100 dark:hover:bg-white/[0.06] rounded transition-all font-medium"
             >
               Cancel
             </button>
