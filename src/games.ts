@@ -12,7 +12,7 @@ export const GAMES: GameConfig[] = [
   {
     id: 'tanks',
     name: 'BSV Tanks',
-    url: 'https://tanksonchain.com',
+    url: 'https://tanks-production-4204.up.railway.app',
     description: 'Turn-based tank battle with BSV wagers',
     color: '#ef4444',
     gradient: 'from-red-500/20 to-orange-500/10',
