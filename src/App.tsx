@@ -9,12 +9,14 @@ import { GameSelector } from './components/GameSelector';
 import { GameFrame } from './components/GameFrame';
 import { TxApprovalModal } from './components/TxApprovalModal';
 import { InteractiveBg } from './components/InteractiveBg';
+import WalletPage from './components/WalletPage';
 
 export default function App() {
   const wallet = useWallet();
   const { theme, toggleTheme } = useTheme();
   const [activeGame, setActiveGame] = useState<GameConfig | null>(null);
   const [pendingTx, setPendingTx] = useState<PendingApproval | null>(null);
+  const [showWalletPage, setShowWalletPage] = useState(false);
 
   // Use refs so the bridge always reads live values without re-syncing
   const walletRef = useRef(wallet);
@@ -90,6 +92,14 @@ export default function App() {
         {/* Wallet */}
         <div className="max-w-sm mx-auto mb-10">
           <WalletPanel wallet={wallet} />
+          {wallet.connected && (
+            <button
+              onClick={() => setShowWalletPage(true)}
+              className="w-full mt-2 py-2 text-[10px] font-semibold tracking-widest uppercase bg-gradient-to-r from-amber-500/10 to-yellow-500/10 hover:from-amber-500/20 hover:to-yellow-500/20 border border-amber-500/20 hover:border-amber-500/40 text-amber-600 dark:text-amber-400 rounded-xl transition-all"
+            >
+              Open Wallet
+            </button>
+          )}
         </div>
 
         {/* Games */}
@@ -111,6 +121,7 @@ export default function App() {
       </footer>
 
       {pendingTx && <TxApprovalModal pending={pendingTx} />}
+      {showWalletPage && <WalletPage wallet={wallet} onClose={() => setShowWalletPage(false)} />}
     </div>
   );
 }
