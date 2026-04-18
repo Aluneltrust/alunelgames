@@ -12,6 +12,8 @@ import { GameFrame } from './components/GameFrame';
 import { TxApprovalModal } from './components/TxApprovalModal';
 import { InteractiveBg } from './components/InteractiveBg';
 import WalletPage from './components/WalletPage';
+import { LegalPage } from './components/LegalPage';
+import type { LegalDoc } from './components/LegalPage';
 
 export default function App() {
   const wallet = useWallet();
@@ -20,6 +22,7 @@ export default function App() {
   const [pendingTx, setPendingTx] = useState<PendingApproval | null>(null);
   const [showWalletPage, setShowWalletPage] = useState(false);
   const [showWalletPopover, setShowWalletPopover] = useState(false);
+  const [legalOpen, setLegalOpen] = useState<LegalDoc | null>(null);
 
   const walletRef = useRef(wallet);
   walletRef.current = wallet;
@@ -235,12 +238,31 @@ export default function App() {
       </main>
 
       {/* Footer */}
-      <footer className="relative z-10 mt-auto py-4 text-center text-xs text-gray-400 dark:text-gray-600">
-        Powered by BSV blockchain
+      <footer className="relative z-10 mt-auto py-5 text-center text-xs text-gray-400 dark:text-gray-600 space-y-2">
+        <div className="flex items-center justify-center gap-4 text-[11px]">
+          <button
+            onClick={() => setLegalOpen('terms')}
+            className="text-gray-500 dark:text-gray-500 hover:text-amber-400 transition-colors"
+          >
+            Terms of Service
+          </button>
+          <span className="text-gray-700">•</span>
+          <button
+            onClick={() => setLegalOpen('privacy')}
+            className="text-gray-500 dark:text-gray-500 hover:text-amber-400 transition-colors"
+          >
+            Privacy Policy
+          </button>
+        </div>
+        <p className="text-[10px] text-amber-700/60 tracking-wide">
+          Play at your own risk. Start with small stakes.
+        </p>
+        <p>Powered by BSV blockchain</p>
       </footer>
 
       {pendingTx && <TxApprovalModal pending={pendingTx} />}
       {showWalletPage && <WalletPage wallet={wallet} onClose={() => setShowWalletPage(false)} />}
+      {legalOpen && <LegalPage doc={legalOpen} onClose={() => setLegalOpen(null)} />}
 
       {showWalletPopover && !wallet.connected && createPortal(
         <div
