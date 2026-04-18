@@ -103,6 +103,225 @@ body {
   animation: pulse-orange 2s ease-in-out infinite;
 }
 
+/* ============================================
+   GOLD BEZEL BUTTON — metallic ring + amber glow
+   Squircle icon/pill with polished gold bezel border
+   ============================================ */
+.btn-bezel {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background: linear-gradient(145deg, #14100a 0%, #0a0805 100%);
+  color: #fde68a;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  border-radius: 14px;
+  padding: 3px;
+  background-clip: padding-box;
+  cursor: pointer;
+  isolation: isolate;
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), filter 0.25s ease;
+  /* Inner rim + soft drop to seat the bezel like the reference */
+  box-shadow:
+    inset 0 1px 0 rgba(255, 224, 168, 0.08),
+    inset 0 -2px 4px rgba(0, 0, 0, 0.6),
+    0 2px 6px rgba(0, 0, 0, 0.55);
+}
+/* The metallic ring — polished conic gradient, wider for the premium look */
+.btn-bezel::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 3px;
+  background: conic-gradient(
+    from 125deg,
+    #3a2408 0deg,
+    #8a5a14 30deg,
+    #e7b25a 70deg,
+    #fff2c9 95deg,
+    #f2c06a 115deg,
+    #c58522 150deg,
+    #5a3608 195deg,
+    #2c1a04 220deg,
+    #7b4e14 260deg,
+    #d49a3e 295deg,
+    #fff0c2 320deg,
+    #c88520 345deg,
+    #3a2408 360deg
+  );
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+          mask-composite: exclude;
+  pointer-events: none;
+  z-index: 1;
+  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.5));
+}
+/* Amber outer glow — subtle */
+.btn-bezel::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow: 0 0 6px rgba(245, 158, 11, 0.12);
+  pointer-events: none;
+  z-index: 0;
+  transition: box-shadow 0.25s ease;
+}
+.btn-bezel:hover:not(:disabled)::after {
+  box-shadow: 0 0 10px rgba(245, 158, 11, 0.2);
+}
+.btn-bezel > * { position: relative; z-index: 2; }
+.btn-bezel:hover:not(:disabled) { transform: translateY(-1px); filter: brightness(1.1); }
+.btn-bezel:active:not(:disabled) { transform: translateY(0); }
+.btn-bezel:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* Sizes */
+.btn-bezel-sm { height: 36px; padding: 2px 14px; font-size: 11px; }
+.btn-bezel-md { height: 44px; padding: 2px 20px; font-size: 12px; }
+.btn-bezel-lg { height: 52px; padding: 2px 28px; font-size: 13px; }
+.btn-bezel-icon { width: 40px; height: 40px; padding: 2px; }
+
+/* Hairline bezel — thinner 1px gold ring */
+.btn-bezel-hairline { padding: 1px 12px; box-shadow: inset 0 1px 0 rgba(255,224,168,0.06), 0 1px 3px rgba(0,0,0,0.4); }
+.btn-bezel-hairline::before { padding: 1px; }
+
+
+/* Light mode tweak — slightly warmer inner */
+:where(:not(.dark)) .btn-bezel {
+  background: linear-gradient(145deg, #1a1208 0%, #0f0a05 100%);
+  color: #fde68a;
+}
+
+/* ============================================
+   PANEL BEZEL — dark opaque panel with gold ring
+   Matches the button bezel aesthetic for popovers
+   ============================================ */
+.panel-bezel {
+  position: relative;
+  background: linear-gradient(160deg, #15100a 0%, #0a0705 50%, #050403 100%);
+  border-radius: 22px;
+  padding: 3px;
+  isolation: isolate;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 224, 168, 0.06),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.6),
+    0 18px 50px rgba(0, 0, 0, 0.7),
+    0 0 10px rgba(245, 158, 11, 0.08);
+}
+.panel-bezel::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 3px;
+  background: conic-gradient(
+    from 125deg,
+    #3a2408 0deg,
+    #8a5a14 30deg,
+    #e7b25a 70deg,
+    #fff2c9 95deg,
+    #f2c06a 115deg,
+    #c58522 150deg,
+    #5a3608 195deg,
+    #2c1a04 220deg,
+    #7b4e14 260deg,
+    #d49a3e 295deg,
+    #fff0c2 320deg,
+    #c88520 345deg,
+    #3a2408 360deg
+  );
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+          mask-composite: exclude;
+  pointer-events: none;
+  z-index: 1;
+  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.5));
+}
+.panel-bezel > * { position: relative; z-index: 2; border-radius: 19px; }
+/* Override translucent inner cards so the shell reads as the container */
+.panel-bezel :where(.card-elevated, .card) {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+/* ============================================
+   SURFACE BAR — raised dark slab with top rim
+   Like the icon bar in the reference screenshot
+   ============================================ */
+.surface-bar {
+  position: relative;
+  background: linear-gradient(180deg, #0f0c08 0%, #0a0805 100%);
+  border-radius: 16px;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 224, 168, 0.05),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.55),
+    0 2px 10px rgba(0, 0, 0, 0.5);
+  color: #e7c98b;
+}
+/* Thin gold hairline — single-pixel muted gold border for containers */
+.bezel-ring-thin {
+  border: 1px solid rgba(200, 133, 32, 0.45);
+}
+/* Thin gray hairline — for neutral containers like the navbar */
+.hairline-gray {
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+/* Faint vertical separator between icon-bar children */
+.surface-bar-divider > :not(:last-child) {
+  border-right: 1px solid rgba(255, 224, 168, 0.05);
+}
+
+/* ============================================
+   SURFACE RIM — subtle bevel on flat cards
+   ============================================ */
+.surface-rim {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 224, 168, 0.06),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.5),
+    0 4px 18px rgba(0, 0, 0, 0.45);
+}
+:where(:not(.dark)) .surface-rim {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.06),
+    0 4px 18px rgba(0, 0, 0, 0.08);
+}
+
+/* ============================================
+   GHOST ICON BUTTON — minimal squircle
+   Matches inactive icons in the reference design
+   ============================================ */
+.btn-ghost-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 1px solid transparent;
+  color: rgba(255, 255, 255, 0.55);
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+.btn-ghost-icon:hover {
+  color: rgba(255, 255, 255, 0.95);
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.06);
+}
+:where(:not(.dark)) .btn-ghost-icon {
+  color: #6b7280;
+}
+:where(:not(.dark)) .btn-ghost-icon:hover {
+  color: #111827;
+  background: rgba(0, 0, 0, 0.04);
+  border-color: rgba(0, 0, 0, 0.06);
+}
+
 /* PIN input dots — Bitcoin coin style */
 .pin-dot {
   width: 18px;

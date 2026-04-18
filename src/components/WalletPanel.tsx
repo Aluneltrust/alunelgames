@@ -93,12 +93,12 @@ export function WalletPanel({ wallet }: { wallet: WalletHook }) {
     </div>
   );
 
-  const yoursButton = (size: 'sm' | 'md' = 'md') => (
+  const yoursButton = () => (
     <>
-      <div className="flex items-center gap-2 mt-3 mb-2">
-        <div className="flex-1 h-px bg-gray-100 dark:bg-white/[0.06]" />
-        <span className="text-[8px] text-gray-300 dark:text-gray-600 uppercase tracking-wider font-medium">or</span>
-        <div className="flex-1 h-px bg-gray-100 dark:bg-white/[0.06]" />
+      <div className="flex items-center gap-3 mt-5 mb-4">
+        <div className="flex-1 h-px bg-gradient-to-r from-transparent via-amber-500/30 to-transparent" />
+        <span className="text-[9px] text-amber-500/70 uppercase tracking-[0.25em] font-semibold">or</span>
+        <div className="flex-1 h-px bg-gradient-to-l from-transparent via-amber-500/30 to-transparent" />
       </div>
       <button
         onClick={async () => {
@@ -111,17 +111,17 @@ export function WalletPanel({ wallet }: { wallet: WalletHook }) {
           }
         }}
         disabled={wallet.loading}
-        className={`w-full ${size === 'sm' ? 'py-1 text-[8px]' : 'py-1.5 text-[9px]'} bg-gradient-to-r from-violet-500 to-indigo-500 hover:from-violet-400 hover:to-indigo-400 disabled:opacity-50 text-white font-medium rounded transition-all flex items-center justify-center gap-1.5 shadow-sm shadow-indigo-500/10`}
+        className="w-full py-2.5 text-[11px] uppercase tracking-[0.15em] font-semibold rounded-lg transition-all flex items-center justify-center gap-2 bg-gradient-to-b from-[#14100a] to-[#0a0805] border border-amber-500/30 text-amber-300 hover:border-amber-400/60 hover:text-amber-200 disabled:opacity-40 disabled:cursor-not-allowed"
       >
-        <svg className={size === 'sm' ? 'w-2.5 h-2.5' : 'w-3 h-3'} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <rect x="2" y="6" width="20" height="12" rx="2" />
           <path d="M22 10H2" />
           <circle cx="18" cy="14" r="1" />
         </svg>
-        {wallet.loading ? 'Connecting...' : 'Connect Yours Wallet'}
+        {wallet.loading ? 'Connecting…' : 'Connect Yours Wallet'}
       </button>
       {!wallet.yoursAvailable && (
-        <p className="text-[8px] text-gray-300 dark:text-gray-600 text-center mt-1">Extension not detected</p>
+        <p className="text-[9px] text-amber-700/60 text-center mt-1.5 tracking-wide">Extension not detected</p>
       )}
     </>
   );
@@ -218,10 +218,12 @@ export function WalletPanel({ wallet }: { wallet: WalletHook }) {
   // Unlock view
   if (view === 'locked') {
     return (
-      <div className="card-elevated rounded-lg px-3 py-4">
-        <h2 className="text-[10px] font-semibold text-gray-800 dark:text-gray-200 text-center mb-3">Unlock Wallet</h2>
+      <div className="rounded-lg px-5 py-5">
+        <h2 className="text-[11px] font-bold text-center mb-1 tracking-[0.25em] uppercase bg-gradient-to-b from-amber-200 to-amber-500 bg-clip-text text-transparent">
+          Unlock Wallet
+        </h2>
         {wallet.addressHint && (
-          <p className="text-[8px] text-gray-400 font-mono truncate mb-2 text-center">{wallet.addressHint}</p>
+          <p className="text-[9px] text-amber-700/60 font-mono truncate mb-4 text-center">{wallet.addressHint}</p>
         )}
 
         {errorBox}
@@ -239,35 +241,38 @@ export function WalletPanel({ wallet }: { wallet: WalletHook }) {
         />
         <div
           onClick={() => document.getElementById('pin-input')?.focus()}
-          className="cursor-pointer rounded border border-gray-200 dark:border-white/10 bg-gray-50/80 dark:bg-white/[0.03] hover:border-indigo-300 dark:hover:border-indigo-500/40 transition-all py-2 mb-2"
+          className="cursor-pointer rounded-xl border border-amber-500/20 bg-black/30 hover:border-amber-400/50 hover:bg-black/40 transition-all py-3 mb-4"
         >
           {pinDots}
-          <p className="text-center text-[7px] text-gray-400">Tap here to enter PIN</p>
+          <p className="text-center text-[9px] text-amber-700/70 tracking-wider uppercase mt-1">Tap to enter PIN</p>
         </div>
 
-        <div className="flex gap-1">
+        <div className="flex gap-2">
           <button
             onClick={handleUnlock}
             disabled={pin.length !== 4}
-            className="w-1/2 py-1 bg-indigo-500 hover:bg-indigo-600 disabled:bg-gray-100 dark:disabled:bg-white/[0.04] disabled:text-gray-300 dark:disabled:text-gray-600 text-white text-[8px] font-medium rounded transition-all shadow-sm shadow-indigo-500/20"
+            className="flex-1 py-2.5 text-[11px] uppercase tracking-[0.15em] font-semibold rounded-lg transition-all bg-gradient-to-b from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 disabled:from-white/[0.04] disabled:to-white/[0.04] disabled:text-gray-600 text-[#0a0805] shadow-sm shadow-amber-500/30 disabled:shadow-none"
           >
             Unlock
           </button>
-          <button onClick={() => { setView('import'); setError(''); setPin(''); }} className="w-1/2 py-1 text-[8px] text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 bg-gray-50 dark:bg-white/[0.03] hover:bg-gray-100 dark:hover:bg-white/[0.06] rounded transition-all font-medium">
+          <button
+            onClick={() => { setView('import'); setError(''); setPin(''); }}
+            className="flex-1 py-2.5 text-[11px] uppercase tracking-[0.15em] font-semibold rounded-lg transition-all bg-black/30 border border-white/10 text-gray-400 hover:text-amber-300 hover:border-amber-500/40"
+          >
             Import Key
           </button>
         </div>
         {confirmDelete ? (
-          <div className="flex gap-1 mt-1">
+          <div className="flex gap-2 mt-2">
             <button
               onClick={() => { wallet.deleteWallet(); setView('create'); setConfirmDelete(false); }}
-              className="w-1/2 py-1 text-[8px] text-white bg-red-500 hover:bg-red-600 rounded transition-all font-medium"
+              className="flex-1 py-2 text-[10px] uppercase tracking-wider text-white bg-red-500/80 hover:bg-red-500 rounded-lg transition-all font-semibold"
             >
               Confirm Delete
             </button>
             <button
               onClick={() => setConfirmDelete(false)}
-              className="w-1/2 py-1 text-[8px] text-gray-400 bg-gray-50 dark:bg-white/[0.03] hover:bg-gray-100 dark:hover:bg-white/[0.06] rounded transition-all font-medium"
+              className="flex-1 py-2 text-[10px] uppercase tracking-wider text-gray-400 bg-black/30 border border-white/10 hover:border-white/20 rounded-lg transition-all font-semibold"
             >
               Cancel
             </button>
@@ -275,23 +280,23 @@ export function WalletPanel({ wallet }: { wallet: WalletHook }) {
         ) : (
           <button
             onClick={() => setConfirmDelete(true)}
-            className="w-full mt-1 py-1 text-[8px] text-red-300 hover:text-red-500 bg-gray-50 dark:bg-white/[0.03] hover:bg-red-50 dark:hover:bg-red-500/10 rounded transition-all font-medium"
+            className="w-full mt-2 py-1.5 text-[10px] uppercase tracking-wider text-red-400/60 hover:text-red-400 rounded-lg transition-all font-medium"
           >
-            Delete
+            Delete Wallet
           </button>
         )}
 
-        {yoursButton('sm')}
+        {yoursButton()}
       </div>
     );
   }
 
   // Create / Import view
   return (
-    <div className="card-elevated rounded-2xl p-6">
-      <div className="flex items-center gap-2 mb-1">
-        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-400 to-violet-500 flex items-center justify-center">
-          <svg className="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+    <div className="rounded-2xl px-5 py-6">
+      <div className="flex flex-col items-center text-center mb-5">
+        <div className="w-11 h-11 rounded-xl bg-gradient-to-b from-amber-500/20 to-amber-500/5 border border-amber-500/30 flex items-center justify-center mb-3 shadow-[0_0_14px_rgba(245,158,11,0.15)]">
+          <svg className="w-5 h-5 text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
             {view === 'import' ? (
               <>
                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
@@ -306,13 +311,13 @@ export function WalletPanel({ wallet }: { wallet: WalletHook }) {
             )}
           </svg>
         </div>
-        <h2 className="text-sm font-semibold text-gray-800 dark:text-gray-200">
+        <h2 className="text-[13px] font-bold tracking-[0.25em] uppercase bg-gradient-to-b from-amber-200 to-amber-500 bg-clip-text text-transparent">
           {view === 'import' ? 'Import Wallet' : 'Create Wallet'}
         </h2>
+        <p className="text-[10px] text-amber-700/60 mt-1 tracking-wide uppercase">
+          {view === 'import' ? 'Paste your WIF private key' : 'Set a 4-digit PIN to encrypt'}
+        </p>
       </div>
-      <p className="text-[11px] text-gray-400 mb-5 ml-10">
-        {view === 'import' ? 'Paste your WIF private key below' : 'Set a 4-digit PIN to encrypt your wallet'}
-      </p>
 
       {errorBox}
 
@@ -322,7 +327,7 @@ export function WalletPanel({ wallet }: { wallet: WalletHook }) {
           placeholder="WIF private key"
           value={wif}
           onChange={e => setWif(e.target.value.trim())}
-          className="w-full px-4 py-3 mb-3 bg-gray-50 dark:bg-white/[0.03] border border-gray-200 dark:border-white/[0.06] rounded-xl text-gray-800 dark:text-white text-xs font-mono placeholder:font-sans placeholder:text-gray-300 dark:placeholder:text-gray-600 focus:outline-none focus:border-indigo-300 dark:focus:border-indigo-500/50 focus:ring-2 focus:ring-indigo-500/10 transition-all"
+          className="w-full px-4 py-3 mb-3 bg-black/30 border border-amber-500/15 rounded-xl text-gray-200 text-xs font-mono placeholder:font-sans placeholder:text-gray-600 focus:outline-none focus:border-amber-500/50 focus:bg-black/40 transition-all"
         />
       )}
 
@@ -330,23 +335,23 @@ export function WalletPanel({ wallet }: { wallet: WalletHook }) {
         type="password"
         maxLength={4}
         inputMode="numeric"
-        placeholder="4-digit PIN"
+        placeholder="••••"
         value={pin}
         onChange={e => setPin(e.target.value.replace(/\D/g, '').slice(0, 4))}
-        className="w-full px-4 py-3 bg-gray-50 dark:bg-white/[0.03] border border-gray-200 dark:border-white/[0.06] rounded-xl text-gray-800 dark:text-white text-center text-xl tracking-[0.5em] font-mono placeholder:text-sm placeholder:tracking-normal placeholder:font-sans placeholder:text-gray-300 dark:placeholder:text-gray-600 focus:outline-none focus:border-indigo-300 dark:focus:border-indigo-500/50 focus:ring-2 focus:ring-indigo-500/10 transition-all"
+        className="w-full px-4 py-3 bg-black/30 border border-amber-500/15 rounded-xl text-amber-200 text-center text-2xl tracking-[0.6em] font-mono placeholder:text-base placeholder:tracking-[0.6em] placeholder:text-amber-700/30 focus:outline-none focus:border-amber-500/50 focus:bg-black/40 transition-all"
       />
 
       <button
         onClick={view === 'import' ? handleImport : handleCreate}
         disabled={pin.length !== 4 || (view === 'import' && !wif)}
-        className="w-full mt-4 py-3 bg-indigo-500 hover:bg-indigo-600 disabled:bg-gray-100 dark:disabled:bg-white/[0.04] disabled:text-gray-300 dark:disabled:text-gray-600 text-white text-sm font-medium rounded-xl transition-all shadow-sm shadow-indigo-500/20 hover:shadow-md hover:shadow-indigo-500/25"
+        className="w-full mt-4 py-3 text-[12px] uppercase tracking-[0.2em] font-bold rounded-xl transition-all bg-gradient-to-b from-amber-400 to-amber-600 hover:from-amber-300 hover:to-amber-500 disabled:from-white/[0.04] disabled:to-white/[0.04] disabled:text-gray-600 text-[#0a0805] shadow-[0_4px_14px_rgba(245,158,11,0.25)] disabled:shadow-none"
       >
         {view === 'import' ? 'Import & Encrypt' : 'Create Wallet'}
       </button>
 
       <button
         onClick={() => { setView(view === 'import' ? 'create' : 'import'); setError(''); setPin(''); setWif(''); }}
-        className="w-full mt-2 py-2 text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 font-medium transition-colors"
+        className="w-full mt-2 py-2 text-[10px] uppercase tracking-[0.15em] text-amber-700/70 hover:text-amber-400 font-semibold transition-colors"
       >
         {view === 'import' ? 'Create new wallet instead' : 'Import existing key instead'}
       </button>

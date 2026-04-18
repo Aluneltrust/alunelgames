@@ -22,25 +22,41 @@ export function GameFrame({ game, onBack }: GameFrameProps) {
   }, [game.url]);
 
   return (
-    <div className="flex flex-col h-full">
-      <div className="flex items-center gap-3 px-5 py-2.5 bg-white dark:bg-[#0a0a12] border-b border-gray-100 dark:border-white/[0.06]">
-        <button
-          onClick={onBack}
-          className="flex items-center gap-1.5 px-3 py-1.5 text-xs bg-gray-50 dark:bg-white/[0.04] hover:bg-gray-100 dark:hover:bg-white/[0.08] text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-white rounded-lg transition-all font-medium"
-        >
-          <span>&larr;</span>
-          <span>Back</span>
-        </button>
-        <div className="h-4 w-px bg-gray-200 dark:bg-white/[0.06]" />
-        <div className="flex items-center gap-2">
-          <div className="w-2 h-2 rounded-full" style={{ backgroundColor: game.color }} />
-          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{game.name}</span>
+    <div className="flex flex-col h-full bg-[#09090b]">
+      <div className="px-2 pt-2">
+        <div className="surface-bar relative w-full pl-2 pr-3 h-9 flex items-center justify-between gap-3">
+          {/* Back button — gold bezel */}
+          <button
+            onClick={onBack}
+            className="btn-bezel btn-bezel-hairline uppercase h-7 text-[10px]"
+            aria-label="Back to games"
+          >
+            <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="19" y1="12" x2="5" y2="12" />
+              <polyline points="12 19 5 12 12 5" />
+            </svg>
+            Back
+          </button>
+
+          {/* Centered game title */}
+          <div className="absolute left-1/2 -translate-x-1/2 pointer-events-none flex items-center gap-2">
+            <span
+              className="w-1.5 h-1.5 rounded-full shrink-0"
+              style={{ backgroundColor: game.color, boxShadow: `0 0 6px ${game.color}99` }}
+            />
+            <span className="text-xs sm:text-sm font-bold tracking-[0.22em] uppercase bg-gradient-to-b from-amber-200 to-amber-500 bg-clip-text text-transparent whitespace-nowrap">
+              {game.name}
+            </span>
+          </div>
+
+          {/* Right spacer — keeps title visually centered */}
+          <div className="w-[64px] shrink-0" aria-hidden />
         </div>
       </div>
       <iframe
         ref={iframeRef}
         src={game.url}
-        className="flex-1 w-full border-0 bg-white dark:bg-black"
+        className="flex-1 w-full border-0 bg-black mt-3"
         sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
         referrerPolicy="origin"
         onLoad={handleIframeLoad}

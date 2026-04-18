@@ -16,7 +16,7 @@ export const GAMES: GameConfig[] = [
     description: 'Turn-based tank battle with BSV wagers',
     color: '#ef4444',
     gradient: 'from-red-500/20 to-orange-500/10',
-    bg: '/bg-tanks.png',
+    bg: '/bg-tanks.webp',
   },
   {
     id: 'flock-wars',
@@ -25,7 +25,7 @@ export const GAMES: GameConfig[] = [
     description: 'Hex-grid battleship with sheep',
     color: '#22c55e',
     gradient: 'from-green-500/20 to-emerald-500/10',
-    bg: '/bg-flock-wars.png',
+    bg: '/bg-flock-wars.webp',
   },
   {
     id: 'chess',
@@ -34,15 +34,15 @@ export const GAMES: GameConfig[] = [
     description: 'Classic chess with micropayments',
     color: '#6366f1',
     gradient: 'from-indigo-500/20 to-blue-500/10',
-    bg: '/bg-chess.png',
+    bg: '/bg-chess.webp',
   },
   {
     id: 'tiktakto',
-    name: 'TikTakTo',
+    name: 'TikTakToe',
     url: 'https://tiktaktobsv.com',
     description: 'Tic-tac-toe with BSV wagers',
     color: '#f59e0b',
     gradient: 'from-amber-500/20 to-yellow-500/10',
-    bg: '/bg-tiktakto.png',
+    bg: '/bg-tiktakto.webp',
   },
 ];
