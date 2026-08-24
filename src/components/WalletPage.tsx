@@ -1,6 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import type { WalletHook } from '../hooks/useWallet';
-import { walletService } from '../services/WalletService';
+import { walletService, WalletService, NETWORK_FEE_SATS, DUST_LIMIT } from '../services/WalletService';
+import { yoursWalletService } from '../services/YoursWalletService';
+import { decryptStoredWif } from '../services/pinCrypto';
+import { QRCodeSVG } from 'qrcode.react';
 
 type TabId = 'receive' | 'send' | 'history';
 
@@ -31,6 +34,47 @@ export default function WalletPage({ wallet, onClose }: { wallet: WalletHook; on
   const [activeTab, setActiveTab] = useState<TabId>('receive');
   const [copied, setCopied] = useState(false);
   const [showQr, setShowQr] = useState(false);
+
+  // WIF export, gated on re-entering the PIN. Previously one click on an
+  // unlocked session copied the private key straight to the OS clipboard —
+  // where Windows clipboard history and cloud sync then persist it outside
+  // the app — and the success alert fired even when the copy had failed.
+  const [exportPrompt, setExportPrompt] = useState(false);
+  const [exportPin, setExportPin] = useState('');
+  const [exportError, setExportError] = useState('');
+  const [exportBusy, setExportBusy] = useState(false);
+  const [exportedWif, setExportedWif] = useState('');
+  const [copiedWif, setCopiedWif] = useState(false);
+
+  const revealWif = async () => {
+    setExportError('');
+    setExportBusy(true);
+    try {
+      // Verified against the stored blob, so an unlocked session alone is not
+      // enough to reveal the key.
+      const revealed = await decryptStoredWif(exportPin);
+      setExportedWif(revealed);
+      setExportPrompt(false);
+      setExportPin('');
+    } catch {
+      setExportError('Incorrect PIN');
+    }
+    setExportBusy(false);
+  };
+
+  const handleCopyWif = async () => {
+    try {
+      // Awaited, so a rejected write is not reported as success. clipboard
+      // writes fail on insecure contexts, denied permission, or an unfocused
+      // document — and a user who trusts a false "copied" message and then
+      // clears their wallet loses the funds.
+      await navigator.clipboard.writeText(exportedWif);
+      setCopiedWif(true);
+      setTimeout(() => setCopiedWif(false), 2000);
+    } catch {
+      setExportError('Copy failed — select the key above and copy it manually.');
+    }
+  };
 
   // Send state
   const [sendTo, setSendTo] = useState('');
@@ -64,23 +108,35 @@ export default function WalletPage({ wallet, onClose }: { wallet: WalletHook; on
   const handleSend = async () => {
     setSendError('');
     setSendSuccess('');
+    const recipient = sendTo.trim();
     const amount = parseInt(sendAmount, 10);
-    if (!sendTo.trim()) { setSendError('Enter a recipient address'); return; }
-    if (!amount || amount < 1) { setSendError('Enter a valid amount in sats'); return; }
-    if (amount > wallet.balance - 200) { setSendError('Insufficient balance'); return; }
+    // Yours handles fees itself; only subtract buffer on the local path.
+    const reserve = isYours ? 0 : NETWORK_FEE_SATS;
+    if (!recipient) { setSendError('Enter a recipient address'); return; }
+    if (!WalletService.isValidAddress(recipient)) { setSendError('Invalid BSV address'); return; }
+    if (!amount || amount < DUST_LIMIT) { setSendError(`Amount must be at least ${DUST_LIMIT} sats`); return; }
+    if (amount > wallet.balance - reserve) { setSendError('Insufficient balance'); return; }
 
     setSending(true);
     try {
-      const result = await walletService.sendPayment(sendTo.trim(), amount);
-      if (!result.success) throw new Error(result.error || 'Send failed');
-      setSendSuccess(`Sent! TX: ${(result.txid || '').substring(0, 16)}...`);
+      let txid: string;
+      if (isYours) {
+        const result = await yoursWalletService.sendBsv(recipient, amount);
+        txid = result.txid;
+      } else {
+        const result = await walletService.sendPayment(recipient, amount);
+        if (!result.success) throw new Error(result.error || 'Send failed');
+        txid = result.txid || '';
+      }
+      setSendSuccess(`Sent! TX: ${txid.substring(0, 16)}...`);
       setSendTo('');
       setSendAmount('');
       wallet.refreshBalance();
-    } catch (err: any) {
-      setSendError(err.message);
+    } catch (err: unknown) {
+      setSendError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setSending(false);
     }
-    setSending(false);
   };
 
   const fetchHistory = useCallback(async () => {
@@ -142,12 +198,15 @@ export default function WalletPage({ wallet, onClose }: { wallet: WalletHook; on
   }, [activeTab]);
 
   const setAmountHelper = (sats: number) => {
-    setSendAmount(String(Math.min(sats, Math.max(0, wallet.balance - 200))));
+    const reserve = isYours ? 0 : NETWORK_FEE_SATS;
+    setSendAmount(String(Math.min(sats, Math.max(0, wallet.balance - reserve))));
   };
 
-  const tabs: { id: TabId; label: string }[] = isYours
-    ? [{ id: 'receive', label: 'Receive' }, { id: 'history', label: 'History' }]
-    : [{ id: 'receive', label: 'Receive' }, { id: 'send', label: 'Send' }, { id: 'history', label: 'History' }];
+  const tabs: { id: TabId; label: string }[] = [
+    { id: 'receive', label: 'Receive' },
+    { id: 'send', label: 'Send' },
+    { id: 'history', label: 'History' },
+  ];
 
   return (
     <div className="wp-overlay" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
@@ -196,27 +255,68 @@ export default function WalletPage({ wallet, onClose }: { wallet: WalletHook; on
               </button>
               {showQr && (
                 <div className="wp-qr">
-                  <img
-                    src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(wallet.address)}`}
-                    alt="QR" width={160} height={160}
-                  />
+                  {/* Generated locally. This used to be an <img> pointing at
+                      api.qrserver.com, which meant a third party rendered the
+                      code people scan to SEND money here — if that service
+                      were compromised or MITM'd it could return a QR encoding
+                      someone else's address, and the text address shown below
+                      is not what gets scanned. It also disclosed every user's
+                      address to an outside host. */}
+                  <QRCodeSVG value={wallet.address} size={160} level="M" />
                 </div>
               )}
               {!isYours && (
-                <button className="wp-btn-sm wp-full wp-export" onClick={() => {
-                  const wif = wallet.exportWif();
-                  if (wif) {
-                    navigator.clipboard.writeText(wif).catch(() => {});
-                    alert('WIF copied to clipboard. Store it safely!');
-                  }
-                }}>
-                  Export WIF
+                <button
+                  className="wp-btn-sm wp-full wp-export"
+                  onClick={() => {
+                    if (exportPrompt || exportedWif) {
+                      setExportPrompt(false); setExportedWif(''); setExportPin(''); setExportError('');
+                    } else {
+                      setExportPrompt(true); setExportPin(''); setExportError('');
+                    }
+                  }}
+                >
+                  {exportPrompt || exportedWif ? 'Hide WIF' : 'Export WIF'}
                 </button>
+              )}
+
+              {/* PIN gate */}
+              {!isYours && exportPrompt && (
+                <div className="wp-export-gate">
+                  <p>Re-enter your PIN to reveal the private key.</p>
+                  <div className="wp-export-row">
+                    <input
+                      type="password"
+                      inputMode="numeric"
+                      autoFocus
+                      value={exportPin}
+                      onChange={(e) => { setExportPin(e.target.value); setExportError(''); }}
+                      onKeyDown={(e) => { if (e.key === 'Enter' && exportPin && !exportBusy) revealWif(); }}
+                      placeholder="PIN"
+                    />
+                    <button onClick={revealWif} disabled={!exportPin || exportBusy}>
+                      {exportBusy ? '...' : 'Reveal'}
+                    </button>
+                  </div>
+                  {exportError && <p className="wp-export-error">{exportError}</p>}
+                </div>
+              )}
+
+              {/* Reveal — shown on screen with an explicit copy, rather than
+                  written to the clipboard automatically. */}
+              {!isYours && exportedWif && (
+                <div className="wp-export-reveal">
+                  <p>Anyone with this key controls your funds.</p>
+                  <code>{exportedWif}</code>
+                  <button onClick={() => handleCopyWif()}>
+                    {copiedWif ? 'Copied!' : 'Copy'}
+                  </button>
+                </div>
               )}
             </div>
           )}
 
-          {activeTab === 'send' && !isYours && (
+          {activeTab === 'send' && (
             <div className="wp-section">
               <div className="wp-field">
                 <span className="wp-label">Recipient Address</span>
@@ -241,15 +341,15 @@ export default function WalletPage({ wallet, onClose }: { wallet: WalletHook; on
                   <button className="wp-helper" onClick={() => setAmountHelper(10000)}>10k</button>
                   <button className="wp-helper" onClick={() => setAmountHelper(100000)}>100k</button>
                   <button className="wp-helper" onClick={() => setAmountHelper(500000)}>500k</button>
-                  <button className="wp-helper" onClick={() => setAmountHelper(Math.max(0, wallet.balance - 200))}>Max</button>
+                  <button className="wp-helper" onClick={() => setAmountHelper(wallet.balance)}>Max</button>
                 </div>
               </div>
 
               {sendAmount && parseInt(sendAmount, 10) > 0 && (
                 <div className="wp-preview">
                   <div className="wp-preview-row"><span>Amount</span><span>{parseInt(sendAmount, 10).toLocaleString()} sats</span></div>
-                  <div className="wp-preview-row"><span>Est. fee</span><span>~200 sats</span></div>
-                  <div className="wp-preview-row wp-total"><span>Total</span><span>{(parseInt(sendAmount, 10) + 200).toLocaleString()} sats</span></div>
+                  {!isYours && <div className="wp-preview-row"><span>Est. fee</span><span>~{NETWORK_FEE_SATS} sats</span></div>}
+                  {!isYours && <div className="wp-preview-row wp-total"><span>Total</span><span>{(parseInt(sendAmount, 10) + NETWORK_FEE_SATS).toLocaleString()} sats</span></div>}
                 </div>
               )}
 
