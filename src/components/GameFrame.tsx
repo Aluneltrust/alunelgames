@@ -58,6 +58,12 @@ export function GameFrame({ game, onBack }: GameFrameProps) {
         src={game.url}
         className="flex-1 w-full border-0 bg-black mt-3"
         sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
+        /* Permissions Policy. Chrome does not delegate autoplay into a
+           cross-origin frame without this, which is why embedded games were
+           silent while the same build had sound when opened directly. The
+           attribute is an allowlist, so naming only autoplay also denies
+           camera, microphone, geolocation and payment to the game. */
+        allow="autoplay"
         referrerPolicy="origin"
         onLoad={handleIframeLoad}
         title={game.name}

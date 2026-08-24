@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import type { WalletHook } from '../hooks/useWallet';
+import { decryptStoredWif } from '../services/pinCrypto';
 
 type View = 'locked' | 'create' | 'import' | 'connected';
 
@@ -12,6 +13,38 @@ export function WalletPanel({ wallet }: { wallet: WalletHook }) {
   const [exportedWif, setExportedWif] = useState('');
   const [copied, setCopied] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  // Export is gated on re-entering the PIN. Revealing the key is the single
+  // most damaging action in the app, and an unlocked session alone should not
+  // authorise it — an unattended device or one stray click was enough before.
+  const [exportPrompt, setExportPrompt] = useState(false);
+  const [exportPin, setExportPin] = useState('');
+  const [exportError, setExportError] = useState('');
+  const [exportBusy, setExportBusy] = useState(false);
+
+  const closeExport = () => {
+    setExportPrompt(false);
+    setShowWif(false);
+    setExportPin('');
+    setExportError('');
+    setExportedWif('');
+  };
+
+  const confirmExport = async () => {
+    setExportError('');
+    setExportBusy(true);
+    try {
+      // Verify against the stored blob rather than trusting session state,
+      // then use the decrypted result directly.
+      const revealed = await decryptStoredWif(exportPin);
+      setExportedWif(revealed);
+      setShowWif(true);
+      setExportPrompt(false);
+      setExportPin('');
+    } catch {
+      setExportError('Incorrect PIN');
+    }
+    setExportBusy(false);
+  };
 
   // Sync view when wallet connection state changes externally
   useEffect(() => {
@@ -183,12 +216,12 @@ export function WalletPanel({ wallet }: { wallet: WalletHook }) {
           {!isYours && (
             <button
               onClick={() => {
-                if (showWif) { setShowWif(false); setExportedWif(''); }
-                else { setExportedWif(wallet.exportWif()); setShowWif(true); }
+                if (showWif || exportPrompt) closeExport();
+                else { setExportPrompt(true); setExportPin(''); setExportError(''); }
               }}
               className="flex-1 py-1.5 text-[10px] bg-gray-50 dark:bg-white/[0.04] hover:bg-gray-100 dark:hover:bg-white/[0.08] text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 rounded-lg transition-all font-medium"
             >
-              {showWif ? 'Hide Key' : 'Export Key'}
+              {showWif || exportPrompt ? 'Hide Key' : 'Export Key'}
             </button>
           )}
           <button
@@ -198,6 +231,35 @@ export function WalletPanel({ wallet }: { wallet: WalletHook }) {
             {isYours ? 'Disconnect' : 'Lock'}
           </button>
         </div>
+
+        {/* PIN gate — stands between the button and the key */}
+        {exportPrompt && !isYours && (
+          <div className="bg-gray-50 dark:bg-white/[0.03] border border-gray-100 dark:border-white/[0.06] rounded-lg p-2.5 mt-2">
+            <p className="text-[9px] text-gray-500 dark:text-gray-400 mb-1.5">
+              Re-enter your PIN to reveal the private key.
+            </p>
+            <div className="flex items-center gap-2">
+              <input
+                type="password"
+                inputMode="numeric"
+                autoFocus
+                value={exportPin}
+                onChange={(e) => { setExportPin(e.target.value); setExportError(''); }}
+                onKeyDown={(e) => { if (e.key === 'Enter' && exportPin && !exportBusy) confirmExport(); }}
+                placeholder="PIN"
+                className="flex-1 min-w-0 px-2 py-1.5 text-[10px] bg-white dark:bg-white/[0.04] border border-gray-200 dark:border-white/[0.08] rounded-md text-gray-700 dark:text-gray-200 outline-none focus:border-amber-400/50"
+              />
+              <button
+                onClick={confirmExport}
+                disabled={!exportPin || exportBusy}
+                className="text-[9px] px-2.5 py-1.5 rounded-md bg-amber-500/90 hover:bg-amber-500 disabled:opacity-40 text-black font-semibold shrink-0 transition-all"
+              >
+                {exportBusy ? '...' : 'Reveal'}
+              </button>
+            </div>
+            {exportError && <p className="text-[9px] text-red-500 mt-1.5">{exportError}</p>}
+          </div>
+        )}
 
         {/* Export key reveal (below actions) */}
         {showWif && !isYours && (

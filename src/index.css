@@ -480,6 +480,45 @@ body {
 .wp-full { width: 100%; text-align: center; }
 .wp-export:hover { border-color: #f43f5e; color: #fb7185; }
 
+/* WIF export — PIN gate and reveal */
+.wp-export-gate {
+  margin-top: 6px; padding: 10px;
+  background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 8px;
+}
+.wp-export-gate > p { font-size: 10px; color: #8a8578; margin: 0 0 8px; }
+.wp-export-row { display: flex; gap: 8px; align-items: center; }
+.wp-export-row input {
+  flex: 1; min-width: 0; padding: 7px 10px; font-size: 11px;
+  background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.09);
+  border-radius: 6px; color: #e4e0d6; outline: none;
+}
+.wp-export-row input:focus { border-color: rgba(245,158,11,0.5); }
+.wp-export-row button {
+  padding: 7px 12px; font-size: 10px; font-weight: 700;
+  letter-spacing: 0.5px; text-transform: uppercase;
+  background: rgba(245,158,11,0.9); color: #000;
+  border: none; border-radius: 6px; cursor: pointer; transition: all 0.2s;
+}
+.wp-export-row button:hover:not(:disabled) { background: #f59e0b; }
+.wp-export-row button:disabled { opacity: 0.4; cursor: not-allowed; }
+.wp-export-error { font-size: 10px; color: #fb7185; margin: 8px 0 0; }
+
+.wp-export-reveal {
+  margin-top: 6px; padding: 10px;
+  background: rgba(244,63,94,0.05); border: 1px solid rgba(244,63,94,0.15);
+  border-radius: 8px;
+}
+.wp-export-reveal > p { font-size: 10px; color: #fb7185; margin: 0 0 6px; }
+.wp-export-reveal code {
+  display: block; font-size: 10px; line-height: 1.55;
+  color: #fda4af; word-break: break-all; margin-bottom: 8px;
+}
+.wp-export-reveal button {
+  font-size: 10px; font-weight: 600; color: #fb7185;
+  background: none; border: none; cursor: pointer; padding: 0;
+}
+
 .wp-qr {
   display: flex; justify-content: center; padding: 14px;
   background: #fff; border-radius: 8px; margin-top: 4px;

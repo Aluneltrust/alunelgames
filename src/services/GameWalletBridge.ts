@@ -31,46 +31,89 @@ interface BridgeReady {
   origin: string;
 }
 
-// Discover the parent's origin via handshake
+// Origins permitted to act as the parent. Anything else is ignored outright.
+// This list is the entire trust boundary — a game that widens it, or that
+// derives the parent from the message body, has no trust boundary at all.
+const ALLOWED_PARENT_ORIGINS = new Set<string>([
+  'https://alunelgames.com',
+  'https://www.alunelgames.com',
+  'https://alunelgames.netlify.app',
+  'https://alunel.games',
+  'https://www.alunel.games',
+]);
+
+/**
+ * Discover the parent's origin via handshake.
+ *
+ * Two rules make this safe, and both were previously missing:
+ *
+ *  1. The origin is taken from `event.origin`, which the browser sets and no
+ *     sender can forge. It used to be read from `data.origin` — a field in
+ *     the message body, chosen by whoever sent it. Any page could frame the
+ *     game, announce itself as AlunelGames, and become the trusted parent.
+ *
+ *  2. There is no '*' fallback. The old 2-second timeout set parentOrigin to
+ *     '*', which then disabled the response-origin check further down
+ *     (`parentOrigin !== '*'` short-circuits it) and broadcast every outbound
+ *     request to any listener. Failing closed is the only safe default when
+ *     the counterparty cannot be identified.
+ */
 function initHandshake(): Promise<string> {
   if (parentOrigin) return Promise.resolve(parentOrigin);
 
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
     const handler = (event: MessageEvent) => {
+      // Validate the origin BEFORE looking at the payload.
+      if (!ALLOWED_PARENT_ORIGINS.has(event.origin)) return;
+
       const data = event.data as BridgeReady;
-      if (data?.type === 'WALLET_BRIDGE_READY' && data.origin) {
-        parentOrigin = data.origin;
-        window.removeEventListener('message', handler);
-        resolve(parentOrigin);
-      }
+      if (data?.type !== 'WALLET_BRIDGE_READY') return;
+
+      parentOrigin = event.origin;
+      window.removeEventListener('message', handler);
+      clearTimeout(timeoutId);
+      resolve(parentOrigin);
     };
 
     window.addEventListener('message', handler);
 
-    // Request handshake — use '*' only for this init message
+    // The INIT probe carries no secrets, so a wildcard target is acceptable
+    // here — we simply do not act on any reply we cannot attribute.
     window.parent.postMessage({ type: 'WALLET_BRIDGE_INIT' }, '*');
 
-    // Fallback: if no handshake response in 2s, use '*' (backwards compat)
-    setTimeout(() => {
-      if (!parentOrigin) {
-        window.removeEventListener('message', handler);
-        parentOrigin = '*';
-        resolve('*');
-      }
+    const timeoutId = setTimeout(() => {
+      window.removeEventListener('message', handler);
+      reject(new Error('No trusted parent wallet detected'));
     }, 2000);
   });
 }
 
 function sendRequest(action: string, payload?: Record<string, unknown>): Promise<unknown> {
   return new Promise((resolve, reject) => {
-    const id = `wallet_${++requestId}_${Date.now()}`;
+    // Unguessable. The id was a counter plus a millisecond timestamp, which an
+    // attacker who could see or predict it could use to race a forged reply
+    // against the real one.
+    const id = typeof crypto !== 'undefined' && crypto.randomUUID
+      ? `wallet_${crypto.randomUUID()}`
+      : `wallet_${++requestId}_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+
+    // Fail closed: without an identified parent there is nobody to ask.
+    const target = parentOrigin;
+    if (!target || target === '*') {
+      reject(new Error('No trusted parent wallet — call gameWallet.init() first'));
+      return;
+    }
+
+    let settled = false;
 
     const handler = (event: MessageEvent) => {
+      // Unconditional origin check — no escape hatch for an unknown parent.
+      if (event.origin !== target) return;
+
       const data = event.data as WalletResponse;
       if (data?.type !== 'WALLET_RESPONSE' || data.id !== id) return;
-
-      // Validate origin if we know it
-      if (parentOrigin && parentOrigin !== '*' && event.origin !== parentOrigin) return;
+      if (settled) return;
+      settled = true;
 
       clearTimeout(timeoutId);
       window.removeEventListener('message', handler);
@@ -85,11 +128,12 @@ function sendRequest(action: string, payload?: Record<string, unknown>): Promise
 
     // Timeout after 60s (user may need time to approve)
     const timeoutId = setTimeout(() => {
+      if (settled) return;
+      settled = true;
       window.removeEventListener('message', handler);
       reject(new Error('Wallet request timed out'));
     }, 60000);
 
-    const target = parentOrigin || '*';
     window.parent.postMessage(
       { type: 'WALLET_REQUEST', version: BRIDGE_VERSION, id, action, payload },
       target,
@@ -135,7 +179,13 @@ export const gameWallet = {
   },
 };
 
-// Auto-init handshake when embedded
+// Auto-init handshake when embedded.
+//
+// The rejection is swallowed deliberately: being framed by something other
+// than AlunelGames is a normal, expected outcome, not an error the page
+// should surface. sendRequest() re-checks and fails closed on its own, so
+// nothing proceeds on an unidentified parent. Without this catch, every such
+// load would raise an unhandled promise rejection.
 if (gameWallet.isEmbedded()) {
-  initHandshake();
+  initHandshake().catch(() => { /* no trusted parent; bridge stays unavailable */ });
 }
