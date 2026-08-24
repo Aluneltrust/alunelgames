@@ -79,7 +79,7 @@ export default function App() {
 
   if (activeGame) {
     return (
-      <div className="h-screen flex flex-col bg-[#fafafa] dark:bg-[#09090b]">
+      <div className="h-screen flex flex-col bg-[#fafafa] dark:bg-[#141418]">
         <GameFrame game={activeGame} onBack={() => setActiveGame(null)} />
         {pendingTx && <TxApprovalModal pending={pendingTx} />}
       </div>
@@ -90,7 +90,7 @@ export default function App() {
   const rest = GAMES.slice(1);
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#fafafa] dark:bg-[#09090b] text-gray-900 dark:text-white relative">
+    <div className="min-h-screen flex flex-col bg-[#fafafa] dark:bg-[#141418] text-gray-900 dark:text-white relative">
       <InteractiveBg />
 
       {/* ===== NAVBAR ===== */}
@@ -201,7 +201,7 @@ export default function App() {
             ) : (
               <div
                 className="absolute inset-0"
-                style={{ background: `linear-gradient(135deg, ${featured.color}33 0%, ${featured.color}11 50%, #09090b 100%)` }}
+                style={{ background: `linear-gradient(135deg, ${featured.color}33 0%, ${featured.color}11 50%, #141418 100%)` }}
               />
             )}
             <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-transparent" />

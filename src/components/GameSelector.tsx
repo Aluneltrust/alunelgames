@@ -30,7 +30,7 @@ export function GameSelector({ onSelect, games = GAMES }: GameSelectorProps) {
               <div
                 className="absolute inset-0"
                 style={{
-                  background: `linear-gradient(135deg, ${game.color}33 0%, ${game.color}11 50%, #09090b 100%)`,
+                  background: `linear-gradient(135deg, ${game.color}33 0%, ${game.color}11 50%, #141418 100%)`,
                 }}
               />
             )}

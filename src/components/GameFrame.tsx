@@ -22,7 +22,7 @@ export function GameFrame({ game, onBack }: GameFrameProps) {
   }, [game.url]);
 
   return (
-    <div className="flex flex-col h-full bg-[#09090b]">
+    <div className="flex flex-col h-full bg-[#141418]">
       <div className="px-2 pt-2">
         <div className="surface-bar relative w-full pl-2 pr-3 h-9 flex items-center justify-between gap-3">
           {/* Back button — gold bezel */}
