@@ -57,7 +57,15 @@ export function GameFrame({ game, onBack }: GameFrameProps) {
         ref={iframeRef}
         src={game.url}
         className="flex-1 w-full border-0 bg-black mt-3"
-        sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
+        /* allow-popups-to-escape-sandbox: without it, a target="_blank" link
+           inside a game opens a popup that INHERITS this sandbox instead of
+           becoming an ordinary top-level tab. That is why "View on chain"
+           failed with ERR_BLOCKED_BY_RESPONSE — WhatsOnChain sends
+           X-Frame-Options: SAMEORIGIN, Cross-Origin-Resource-Policy:
+           same-origin and COOP/COEP, so it refuses to load in any embedded
+           context. Adding it to frame-src would not have helped; such links
+           have to leave the frame entirely. */
+        sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox"
         /* Permissions Policy. Chrome does not delegate autoplay into a
            cross-origin frame without this, which is why embedded games were
            silent while the same build had sound when opened directly. The
