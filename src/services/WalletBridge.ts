@@ -7,6 +7,8 @@ import { GAMES } from '../games';
 const BRIDGE_VERSION = 1;
 const MAX_PAYMENT_SATS = 21_000_000 * 1e8;
 const DUST_LIMIT = 546;
+/** Upper bound on an OP_RETURN memo, in bytes. Games label wagers; that is it. */
+const MAX_MEMO_BYTES = 512;
 
 // Message types between parent (this app) and child iframes (games)
 export interface WalletRequest {
@@ -131,14 +133,41 @@ async function handleRequest(request: WalletRequest, origin: string, source: Mes
         return;
       }
 
+      // Validate the memo. toAddress and amount were checked above but memo
+      // went straight through unexamined, and it is rendered verbatim in the
+      // approval modal: a multi-megabyte memo grew the panel past the viewport
+      // and pushed Approve and Reject out of reach. With no way to resolve the
+      // prompt, pendingApprovalId stayed set and every later payment was
+      // refused as "another transaction is pending" for the rest of the
+      // session. It also inflates the transaction, and so the fee.
+      if (memo !== undefined) {
+        if (typeof memo !== 'string') {
+          respond(false, undefined, 'Invalid memo: must be a string');
+          return;
+        }
+        if (new TextEncoder().encode(memo).length > MAX_MEMO_BYTES) {
+          respond(false, undefined, `Invalid memo: must be ${MAX_MEMO_BYTES} bytes or fewer`);
+          return;
+        }
+      }
+
       // Reject concurrent approval requests
       if (pendingApprovalId) {
         respond(false, undefined, 'Another transaction is pending approval');
         return;
       }
 
-      // Require user approval for signing (local wallet only — Yours Wallet shows its own approval)
-      if (!isYours && approvalCallback) {
+      // Require user approval for signing (local wallet only — Yours Wallet
+      // shows its own approval).
+      //
+      // Fail closed: with no approval UI registered there is no way to ask,
+      // and the old `&& approvalCallback` condition fell through to signing
+      // instead — turning the component into an auto-signing wallet.
+      if (!isYours) {
+        if (!approvalCallback) {
+          respond(false, undefined, 'Approval UI unavailable');
+          return;
+        }
         pendingApprovalId = request.id;
         const approved = await new Promise<boolean>((resolve) => {
           approvalCallback!({ request, origin, source, resolve });

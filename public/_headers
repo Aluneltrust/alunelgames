@@ -1,0 +1,27 @@
+# Security headers (Netlify format — files in public/ are copied to dist/).
+#
+# The portal custodies private keys in the browser, so an XSS here is a total
+# wallet compromise. Previously nothing constrained where a script could send
+# localStorage, and nothing stopped the site being framed.
+#
+# If the portal is hosted somewhere other than Netlify this file is inert and
+# the equivalent needs configuring there instead (vercel.json "headers", or
+# the platform's header settings).
+
+/*
+  # frame-ancestors 'none' is the anti-clickjacking control that matters here:
+  # without it the Approve button in the transaction modal, and the Export Key
+  # button, can be overlaid by an attacker's decoy UI in a transparent frame.
+  # The portal is always the top frame — it embeds games, it is not embedded.
+  #
+  # connect-src is deliberately narrow: WhatsOnChain is the only host this app
+  # talks to. That is what stops an injected script from exfiltrating the
+  # encrypted wallet blob to an attacker's server.
+  #
+  # style-src allows 'unsafe-inline' because React inline styles and Tailwind
+  # require it. script-src does NOT, which is the half that counts.
+  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://api.whatsonchain.com; frame-src https://tanks-production-4204.up.railway.app https://sheeponchain.com https://royalsonchain.com https://tiktaktobsv.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'
+  X-Frame-Options: DENY
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=()
